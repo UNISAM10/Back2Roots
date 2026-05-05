@@ -19,6 +19,21 @@
   --cb-ease:         cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ── Light Theme Overrides ────────────────────────────────────── */
+body.light-theme {
+  --cb-bg:           #f5f7fb;
+  --cb-glass:        rgba(255, 255, 255, 0.85);
+  --cb-glass-strong: rgba(255, 255, 255, 0.95);
+  --cb-border:       rgba(0, 0, 0, 0.08);
+  --cb-accent:       #0a66c2;
+  --cb-accent-dim:   rgba(10, 102, 194, 0.12);
+  --cb-accent-glow:  rgba(10, 102, 194, 0.20);
+  --cb-text:         #0f172a;
+  --cb-text-soft:    rgba(15, 23, 42, 0.75);
+  --cb-text-faint:   rgba(15, 23, 42, 0.45);
+  --cb-shadow:       0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
 /* ══════════════════════════════════════════════════════════════
    1. LAUNCHER BUTTON (floating icon — bottom right)
    ══════════════════════════════════════════════════════════════ */
@@ -124,6 +139,14 @@ button.chatbot-launcher:active {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   box-shadow: var(--cb-shadow);
   overflow: hidden;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body.light-theme .cb-shell {
+  background:
+    radial-gradient(ellipse at top left,  rgba(10,102,194,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at bottom right, rgba(255,255,255,0.6) 0%, transparent 50%),
+    rgba(255, 255, 255, 0.85);
 }
 
 /* Fullscreen shell gets richer bg */
@@ -360,6 +383,12 @@ button.chatbot-launcher:active {
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 18px 18px 18px 5px;
   color: var(--cb-text);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+body.light-theme .message-bubble.received .message-text {
+  background: var(--cb-glass);
+  border-color: var(--cb-border);
 }
 
 .message-time {
@@ -432,11 +461,15 @@ button.chatbot-launcher:active {
   font-family: inherit;
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 200ms ease, box-shadow 200ms ease;
+  transition: border-color 200ms ease, box-shadow 200ms ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+body.light-theme .chatbot-input {
+  background: #ffffff;
 }
 
 .chatbot-input::placeholder {
-  color: rgba(255,255,255,0.35);
+  color: var(--cb-text-faint);
 }
 
 .chatbot-input:focus {

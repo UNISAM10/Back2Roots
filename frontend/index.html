@@ -441,6 +441,7 @@
       <li><a href="#testimonials">Stories</a></li>
     </ul>
     <div class="lp-nav-cta">
+      <button class="theme-toggle-btn" aria-label="Toggle theme">☀️</button>
       <a href="login.html" class="btn-nav-ghost">Sign In</a>
       <a href="signup.html" class="btn-nav-solid">Get Started →</a>
     </div>
@@ -681,5 +682,6 @@
       try { const { isLoggedIn } = await import('./js/api.js'); if (isLoggedIn()) location.href = 'dashboard.html'; } catch(e) {}
     })();
   </script>
+  <script src="js/theme.js"></script>
 </body>
 </html>

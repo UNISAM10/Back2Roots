@@ -35,6 +35,26 @@ html { font-size: 15px; scroll-behavior: smooth; }
   --sidebar-w:   230px;
 }
 
+body.light-theme {
+  --navy:        #f5f7fb;
+  --navy2:       #ffffff;
+  --navy3:       #f0f4f8;
+  --navy4:       #e2e8f0;
+  --text:        #0f172a;
+  --text-dim:    rgba(15,23,42,0.6);
+  --text-mid:    rgba(15,23,42,0.9);
+  --border:      rgba(0,0,0,0.08);
+  --border-mid:  rgba(0,0,0,0.12);
+}
+
+.theme-toggle-btn {
+  background: none; border: none; font-size: 1.2rem; cursor: pointer;
+  padding: 4px; display: grid; place-items: center; border-radius: 50%;
+  transition: all 0.2s; color: var(--text-mid);
+}
+.theme-toggle-btn:hover { background: rgba(0,0,0,0.05); }
+body:not(.light-theme) .theme-toggle-btn:hover { background: rgba(255,255,255,0.1); }
+
 body {
   background: var(--navy);
   color: var(--text);
@@ -42,6 +62,7 @@ body {
   min-height: 100vh;
   display: flex;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ── Scrollbar ── */
@@ -62,6 +83,7 @@ body {
   position: fixed;
   top: 0; left: 0; bottom: 0;
   z-index: 100;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar-logo {
@@ -254,7 +276,7 @@ body {
   padding: 22px 22px 18px;
   position: relative;
   overflow: hidden;
-  transition: border-color 0.25s, transform 0.25s;
+  transition: border-color 0.25s, transform 0.25s, background-color 0.3s ease;
   cursor: default;
 }
 .stat-card::before {

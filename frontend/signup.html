@@ -29,6 +29,22 @@
       --border: rgba(255,255,255,0.1);
     }
 
+    body.light-theme {
+      --navy: #f5f7fb;
+      --navy2: #ffffff;
+      --navy3: #f0f4f8;
+      --border-dim: rgba(0,0,0,0.08);
+      --border-glow: rgba(10,102,194,0.25);
+      --border: rgba(0,0,0,0.1);
+      --text-dim: rgba(15,23,42,0.6);
+      --text-mid: rgba(15,23,42,0.9);
+      --text-muted: rgba(15,23,42,0.5);
+      color: #0f172a;
+    }
+
+    body { transition: background-color 0.3s ease, color 0.3s ease; }
+    .auth-left, .auth-right { transition: background-color 0.3s ease; }
+
     .auth-shell {
       min-height: 100vh;
       display: grid;
@@ -261,9 +277,23 @@
     @media (max-width: 420px) {
       .two-col { grid-template-columns: 1fr; }
     }
+
+    .theme-toggle-fixed {
+      position: absolute; top: 24px; right: 24px;
+      background: rgba(255,255,255,0.1); border: 1px solid var(--border-dim);
+      font-size: 1.2rem; cursor: pointer; padding: 8px;
+      border-radius: 50%; transition: all 0.2s; color: var(--text-mid);
+      z-index: 100;
+    }
+    .theme-toggle-fixed:hover { background: rgba(255,255,255,0.2); }
+    body.light-theme .theme-toggle-fixed { background: rgba(0,0,0,0.05); }
+    body.light-theme .theme-toggle-fixed:hover { background: rgba(0,0,0,0.1); }
   </style>
+  <script src="js/theme.js" defer></script>
 </head>
-<body data-page="register">
+<body data-page="signup">
+
+<button class="theme-toggle-btn theme-toggle-fixed" aria-label="Toggle theme">☀️</button>
 
 <div class="auth-shell">
 
@@ -471,5 +501,6 @@
 
 <!-- Original script tag preserved exactly -->
 <script type="module" src="js/auth.js"></script>
+<script src="js/theme.js"></script>
 </body>
 </html>
