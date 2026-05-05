@@ -1,11 +1,11 @@
 import os
+import bcrypt
 from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from . import models
@@ -19,15 +19,13 @@ SECRET_KEY: str = os.getenv(
 ALGORITHM  = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("TOKEN_EXPIRE_MINUTES", "1440"))  # 24 h
 
-# ─── Password hashing ──────────────────────────────────────────────────────────
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=12
-)
+# ─── Password hashing (using bcrypt directly — compatible with bcrypt 5.x) ────
+_BCRYPT_ROUNDS = 12
+
 
 # ─── OAuth2 bearer scheme ──────────────────────────────────────────────────────
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme          = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -35,12 +33,19 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 # ══════════════════════════════════════════════════════════════════════════════
 def verify_password(plain: str, hashed: str) -> bool:
     """Return True if *plain* matches *hashed*."""
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(
+            plain.encode("utf-8"),
+            hashed.encode("utf-8") if isinstance(hashed, str) else hashed,
+        )
+    except Exception:
+        return False
 
 
 def get_password_hash(plain: str) -> str:
     """Return bcrypt hash of *plain*."""
-    return pwd_context.hash(plain)
+    hashed = bcrypt.hashpw(plain.encode("utf-8"), bcrypt.gensalt(rounds=_BCRYPT_ROUNDS))
+    return hashed.decode("utf-8")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -111,3 +116,20 @@ def require_admin(
             detail="Administrator privileges required",
         )
     return current_user
+
+
+def get_optional_user(
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db),
+) -> Optional[models.User]:
+    """
+    Dependency — resolves a Bearer token to a User if present, otherwise
+    returns None. Suitable for endpoints that are public but benefit from
+    knowing who is calling (e.g. the chatbot).
+    """
+    if not token:
+        return None
+    user_id = _decode_token(token)
+    if user_id is None:
+        return None
+    return db.query(models.User).filter(models.User.id == user_id).first()

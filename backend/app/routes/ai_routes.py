@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends
+import logging
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Set
+from typing import List, Optional, Set
 
 from .. import models, schemas
-from ..auth import get_current_user
+from ..auth import get_current_user, get_optional_user
 from ..database import get_db
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ai", tags=["AI Features"])
 
 
@@ -231,7 +233,7 @@ _SUGGESTION_KEYWORDS = {
 def chatbot(
     payload: schemas.ChatbotRequest,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: Optional[models.User] = Depends(get_optional_user),
 ):
     """
     Rule-based career chatbot.
@@ -243,33 +245,51 @@ def chatbot(
     **Supported topics:** resume, interview, networking, career, internship,
     skills, mentor, salary, higher studies (and more).
     """
-    msg_lower = payload.message.lower()
+    logger.info("[chatbot] incoming message: %r (user_id=%s)",
+                payload.message,
+                current_user.id if current_user else "anonymous")
 
-    # ── Match reply ───────────────────────────────────────────────────────────
-    reply = _DEFAULT_REPLY
-    for keyword, response in _RESPONSES.items():
-        if keyword in msg_lower:
-            reply = response
-            break
+    try:
+        msg_lower = payload.message.lower()
 
-    # ── Attach alumni suggestions if relevant ─────────────────────────────────
-    suggestions: List[schemas.UserPublic] = []
-    if any(kw in msg_lower for kw in _SUGGESTION_KEYWORDS):
-        user_skills = _parse_skills(current_user.skills)
-        alumni_list = (
-            db.query(models.User)
-            .filter(models.User.role == "alumni")
-            .limit(30)
-            .all()
+        # ── Match reply ───────────────────────────────────────────────────────
+        reply = _DEFAULT_REPLY
+        for keyword, response_text in _RESPONSES.items():
+            if keyword in msg_lower:
+                reply = response_text
+                break
+
+        # ── Attach alumni suggestions if relevant ─────────────────────────────
+        suggestions: List[schemas.UserPublic] = []
+        if current_user and any(kw in msg_lower for kw in _SUGGESTION_KEYWORDS):
+            user_skills = _parse_skills(current_user.skills)
+            alumni_list = (
+                db.query(models.User)
+                .filter(models.User.role == "alumni")
+                .limit(30)
+                .all()
+            )
+
+            scored = sorted(
+                alumni_list,
+                key=lambda a: _jaccard(user_skills, _parse_skills(a.skills)),
+                reverse=True,
+            )
+            suggestions = [
+                schemas.UserPublic.model_validate(a) for a in scored[:3]
+            ]
+
+        logger.info("[chatbot] response length=%d, suggestions=%d",
+                    len(reply), len(suggestions))
+
+        return schemas.ChatbotResponse(response=reply, suggestions=suggestions)
+
+    except HTTPException:
+        raise  # re-raise FastAPI HTTP exceptions unchanged
+
+    except Exception as exc:
+        logger.exception("[chatbot] unexpected error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Chatbot encountered an internal error. Please try again.",
         )
-
-        scored = sorted(
-            alumni_list,
-            key=lambda a: _jaccard(user_skills, _parse_skills(a.skills)),
-            reverse=True,
-        )
-        suggestions = [
-            schemas.UserPublic.model_validate(a) for a in scored[:3]
-        ]
-
-    return schemas.ChatbotResponse(reply=reply, suggestions=suggestions)

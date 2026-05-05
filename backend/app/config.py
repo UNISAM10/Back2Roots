@@ -10,7 +10,7 @@ load_dotenv()
 class Settings:
     DATABASE_URL: str = os.environ.get("DATABASE_URL")
 
-    print("✅ DATABASE_URL =", DATABASE_URL)
+    print("[OK] DATABASE_URL =", DATABASE_URL)
 
     SECRET_KEY: str = os.environ.get(
         "SECRET_KEY",

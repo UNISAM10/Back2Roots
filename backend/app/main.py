@@ -4,10 +4,19 @@ FastAPI application entry point — all routers, middleware, static files.
 """
 
 import os
+import logging
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger(__name__)
 
 from .database import engine, Base
 from .config import settings
@@ -32,7 +41,7 @@ Path("uploads/post_images").mkdir(parents=True, exist_ok=True)
 
 # ── Application ────────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="Alumni Nexus API",
+    title="Back2Roots API",
     description=(
         "## AI-Driven Alumni Management and Networking Platform\n\n"
         "A college-ecosystem REST API powering:\n"
@@ -55,18 +64,30 @@ app = FastAPI(
     debug=settings.DEBUG,
 )
 
-# ── CORS ──────────────────────────────────────────────────────────────────────
-# ── CORS ──────────────────────────────────────────────────────────────────────
+# ── CORS ──────────────────────────────────────────────────────────────────────────────
 origins = [
+    # Local development — various ports used by Live Server / Vite / plain node
     "http://127.0.0.1:8080",
     "http://localhost:8080",
-    "https://back2-roots.vercel.app"
+    "http://127.0.0.1:5500",   # VS Code Live Server
+    "http://localhost:5500",
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:8001",   # alternate dev port
+    "http://127.0.0.1:8001",
+    "http://localhost:8002",   # active dev port (8000 has ghost sockets on Windows)
+    "http://127.0.0.1:8002",
+    # Production
+    "https://back2-roots.vercel.app",
+    "https://back2roots.vercel.app",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,   # 🔥 IMPORTANT CHANGE
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

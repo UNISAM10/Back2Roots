@@ -232,9 +232,19 @@ class MentorshipOut(BaseModel):
 class ChatbotRequest(BaseModel):
     message: str
 
+    @field_validator("message")
+    @classmethod
+    def message_not_empty(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Message cannot be empty")
+        if len(v) > 1000:
+            raise ValueError("Message too long (max 1000 chars)")
+        return v
+
 
 class ChatbotResponse(BaseModel):
-    reply:       str
+    response:    str                  # ← frontend reads data.response
     suggestions: List[UserPublic] = []
 
 

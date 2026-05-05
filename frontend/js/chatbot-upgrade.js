@@ -94,35 +94,42 @@
     showTyping();
 
     try {
-      const res = await fetch("https://back2roots-uews.onrender.com/ai/chatbot", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: text
-        })
+      // Determine API base URL based on environment
+      const API_BASE = window.location.hostname === 'localhost' ||
+                       window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:8002'
+        : 'https://back2roots-uews.onrender.com';
+
+      const token   = localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`${API_BASE}/ai/chatbot`, {
+        method:  'POST',
+        headers: headers,
+        body:    JSON.stringify({ message: text }),
       });
 
       if (!res.ok) {
-        throw new Error("Server error: " + res.status);
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || `Server error ${res.status}`);
       }
 
       const data = await res.json();
-      console.log("AI RESPONSE:", data);
+      console.log('[chatbot-upgrade] response:', data);
 
       hideTyping();
 
+      // Backend returns { response: "...", suggestions: [] }
       addBubble(
-        data.response || data.message || "I couldn't understand that.",
-        "received"
+        data.response || data.reply || data.message || "I couldn't understand that.",
+        'received'
       );
 
     } catch (err) {
-      console.error("ERROR:", err);
-
+      console.error('[chatbot-upgrade] ERROR:', err);
       hideTyping();
-      addBubble("⚠️ Connection issue. Please try again.", "received");
+      addBubble('⚠️ Connection issue. Please try again.', 'received');
     }
   }
 
